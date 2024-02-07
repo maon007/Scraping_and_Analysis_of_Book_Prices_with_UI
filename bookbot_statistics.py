@@ -133,22 +133,25 @@ def average_deviation_from_lowest_price(data=None):
         return f"Error loading data: {e}"
 
     # Get ISBNs where Bookbot Provider is present
-    bookbot_isbns = df[df['Provider'] == "Bookbot"]['ISBN13'].unique()
-
-    # Get Bookbot prices
-    bookbot_prices = df[df['Provider'] == "Bookbot"]['Price'].tolist()
-
-    # Lowest price for each ISBN where Bookbot is present
-    lowest_prices = []
-    for isbn in bookbot_isbns:
-        lowest_prices.append(df[df['ISBN13'] == isbn]['Price'].min())
-
-    # Deviation of each Bookbot's offer from the lowest price
-    deviations = [price - lowest_price for price, lowest_price in zip(bookbot_prices, lowest_prices)]
-
-    # Average deviation of Bookbot's offers from the lowest price
-    average_deviation = sum(deviations) / len(deviations)
-
+    bookbot_isbns = df[df['Provider'] == 'Bookbot']['ISBN13'].unique()
+    bookbot_df = df[df['ISBN13'].isin(bookbot_isbns)]
+    
+    # Filter out only Bookbot offers
+    bookbot_only = bookbot_df[bookbot_df['Provider'] == 'Bookbot']
+    
+    # Get the lowest price for each ISBN where Bookbot is present
+    lowest_price_indices = bookbot_df.groupby('ISBN13')['Price'].idxmin()
+    lowest_price_rows = bookbot_df.loc[lowest_price_indices]
+    
+    # Merge the two dataframes based on ISBN13
+    merged_df = bookbot_only.merge(lowest_price_rows[['ISBN13', 'Price']], on='ISBN13', suffixes=('_bookbot', '_lowest'))
+    
+    # Calculate deviation for each row
+    merged_df['Deviation'] = merged_df['Price_bookbot'] - merged_df['Price_lowest']
+    
+    # Calculate the average deviation of Bookbot's offers from the lowest price
+    average_deviation = merged_df['Deviation'].mean()
+    
     return average_deviation
 
 
