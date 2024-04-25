@@ -1,5 +1,4 @@
-# BookBot project
-Scraping data from AbeBooks website.
+# Scraping data from AbeBooks website.
 
 ## Project Description
 
